@@ -1,4 +1,3 @@
-using NUnit.Framework.Constraints;
 using UnityEngine;
 
 public class sinusoidal : MonoBehaviour
@@ -10,32 +9,35 @@ public class sinusoidal : MonoBehaviour
     public GameObject cellPrefab;
 
     public float amplitud = 1f;
+    public float longitudOnda = 10f;
+    public Vector2 direccion = new Vector2(1f, 0f); 
+    public float periodo  = 2f;
+    public float faseInicial  = 0f;
+
     public float stepTime = 0.01f;
-    public float period  = 1f;
 
     private GameObject[,] cells;
-    private Vector2[,] initialPositions;
-    private float[,] phases;
+    private Vector3[,] initialPositions;
     private float time;
     
-
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         cells = new GameObject[width, height];
-        initialPositions = new Vector2[width, height];
-        phases = new float[width, height];
+        initialPositions = new Vector3[width, height];
+
+        direccion = direccion.normalized; 
 
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int z = 0; z < height; z++)
             {
-                Vector2 pos = new Vector2(x * spacing, y * spacing);
+                Vector3 pos = new Vector3(x * spacing, 0f, z * spacing);
                 GameObject cell = Instantiate(cellPrefab, pos, Quaternion.identity, transform);
 
-                cells[x, y] = cell;
-                initialPositions[x, y] = pos;
-                phases[x, y] = (x + y) * Mathf.PI / 4f;// ripple pattern
+                cells[x, z] = cell;
+                initialPositions[x, z] = pos;
             }
         }
     }
@@ -44,15 +46,25 @@ public class sinusoidal : MonoBehaviour
     void Update()
     {
         time += stepTime;
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
 
-                Vector2 basePos = initialPositions[x, y];
-                float phase = phases[x, y];
-                float offsetY = amplitud * Mathf.Sin(2 * Mathf.PI * time / period + phase);
-                Vector2 newPos = new Vector2(basePos.x, basePos.y + offsetY);
+        float velocidad = longitudOnda / periodo; 
 
-                cells[x, y].transform.position = newPos;
+        for (int x = 0; x < width; x++) 
+        {
+            for (int z = 0; z < height; z++) 
+            {
+                Vector3 basePos = initialPositions[x, z];
+
+                float posicionProyectada = basePos.x * direccion.x + basePos.z * direccion.y;
+
+                float k = (2f * Mathf.PI) / longitudOnda;
+                float insideSin = k * (posicionProyectada - velocidad * time) + faseInicial;
+
+                float offsetY = amplitud * Mathf.Sin(insideSin);
+
+                Vector3 newPos = new Vector3(basePos.x, basePos.y + offsetY, basePos.z);
+
+                cells[x, z].transform.position = newPos;
 
             }
                 

@@ -4,18 +4,20 @@ using UnityEngine;
 public class gerstner : MonoBehaviour
 {
 
-    public int width = 5;
-    public int height = 5;
+    public int width = 10;
+    public int height = 10;
     public float spacing = 2f;
     public GameObject cellPrefab;
 
     public float amplitud = 1f;
+    public float longitudOnda = 10f;
+    public Vector2 direccion = new Vector2(1f, 0f); 
+    public float periodo  = 2f;
+
     public float stepTime = 0.01f;
-    public float period  = 1f;
 
     private GameObject[,] cells;
     private Vector2[,] initialPositions;
-    private float[,] phases;
     private float time;
     
 
@@ -24,18 +26,18 @@ public class gerstner : MonoBehaviour
     {
         cells = new GameObject[width, height];
         initialPositions = new Vector2[width, height];
-        phases = new float[width, height];
+
+        direccion = direccion.normalized; 
 
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int z = 0; z < height; z++)
             {
-                Vector2 pos = new Vector2(x * spacing, y * spacing);
+                Vector3 pos = new Vector3(x * spacing, 0f, z * spacing);
                 GameObject cell = Instantiate(cellPrefab, pos, Quaternion.identity, transform);
 
-                cells[x, y] = cell;
-                initialPositions[x, y] = pos;
-                phases[x, y] = (x + y) * Mathf.PI / 4f;// ripple pattern
+                cells[x, z] = cell;
+                initialPositions[x, z] = pos;
             }
         }
     }
@@ -45,23 +47,31 @@ public class gerstner : MonoBehaviour
     {
         time += stepTime;
 
-        Vector2 k = new Vector2(1f, 0f);
-        float k_mag = k.magnitude;
-        float omega = 2f*Mathf.PI/period;
+        float k_mag = (2f * Mathf.PI) / longitudOnda;
+        Vector2 k = direccion * k_mag;
 
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
+        float omega = 2f * Mathf.PI / periodo;
 
-                Vector2 basePos = initialPositions[x, y];
-                float phase = Vector2.Dot(k,basePos )- omega*time; // Atención !!!!! Aquí en 3D no es basPos, es la posicón en el plano!!!!
+        for (int x = 0; x < width; x++) 
+        {
+            for (int z = 0; z < height; z++) 
+            {
+                Vector3 basePos = initialPositions[x, z];
+
+                float fase = (k.x * basePos.x + k.y * basePos.z) - omega * time;
                 
-                
-                float offsetX = - (k.x/k_mag)*amplitud*Mathf.Sin(phase);
-                float offsetY = amplitud * Mathf.Cos(phase);
-                Vector2 newPos = new Vector2(basePos.x + offsetX, basePos.y + offsetY);
+                float offsetX = -(k.x / k_mag) * amplitud * Mathf.Sin(fase);
+                float offsetZ = -(k.y / k_mag) * amplitud * Mathf.Sin(fase);
 
-                cells[x, y].transform.position = newPos;
+                float offsetY = amplitud * Mathf.Cos(fase);
 
+                Vector3 newPos = new Vector3(
+                    basePos.x + offsetX, 
+                    basePos.y + offsetY,
+                    basePos.z + offsetZ
+                );
+
+                cells[x, z].transform.position = newPos;
             }
                 
         }
