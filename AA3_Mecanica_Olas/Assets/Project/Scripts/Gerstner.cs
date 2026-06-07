@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class gerstner : MonoBehaviour
 {
-
+    public int initialX = 0;
+    public int initialY = 0;
     public int width = 10;
     public int height = 10;
     public float spacing = 2f;
@@ -17,7 +18,7 @@ public class gerstner : MonoBehaviour
     public float stepTime = 0.01f;
 
     private GameObject[,] cells;
-    private Vector2[,] initialPositions;
+    private Vector3[,] initialPositions;
     private float time;
     
 
@@ -25,7 +26,7 @@ public class gerstner : MonoBehaviour
     void Start()
     {
         cells = new GameObject[width, height];
-        initialPositions = new Vector2[width, height];
+        initialPositions = new Vector3[width, height];
 
         direccion = direccion.normalized; 
 
@@ -33,7 +34,7 @@ public class gerstner : MonoBehaviour
         {
             for (int z = 0; z < height; z++)
             {
-                Vector3 pos = new Vector3(x * spacing, 0f, z * spacing);
+                Vector3 pos = new Vector3((x + initialX) * spacing, 0f, (z + initialY) * spacing);
                 GameObject cell = Instantiate(cellPrefab, pos, Quaternion.identity, transform);
 
                 cells[x, z] = cell;
@@ -43,7 +44,7 @@ public class gerstner : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         time += stepTime;
 
@@ -76,6 +77,37 @@ public class gerstner : MonoBehaviour
                 
         }
 
+    }
+
+    public float GetGerstnerWaterHeight(Vector3 buoyPos)
+    {
+        GameObject closestCell = null;
+        float minDistanceSqr = Mathf.Infinity;
+
+        // Iteramos sobre la matriz de celdas que ya calculaste en Gerstner.cs
+        for (int x = 0; x < width; x++)
+        {
+            for (int z = 0; z < height; z++)
+            {
+                Vector3 cellPos = cells[x, z].transform.position;
+
+                // Calculamos distancia solo en el plano XZ (horizontal)
+                float distSqr = Mathf.Pow(cellPos.x - buoyPos.x, 2) + Mathf.Pow(cellPos.z - buoyPos.z, 2);
+
+                if (distSqr < minDistanceSqr)
+                {
+                    minDistanceSqr = distSqr;
+                    closestCell = cells[x, z];
+                }
+            }
+        }
+
+        if (closestCell != null)
+        {
+            return closestCell.transform.position.y; // Retorna la altura Y real actual
+        }
+
+        return initialY;
     }
 }
 

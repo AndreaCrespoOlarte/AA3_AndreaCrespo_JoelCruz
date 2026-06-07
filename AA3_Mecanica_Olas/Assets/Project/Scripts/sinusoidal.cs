@@ -1,8 +1,10 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class sinusoidal : MonoBehaviour
 {
-
+    public int initialX = 0;
+    public int initialY = 0;
     public int width = 5;
     public int height = 5;
     public float spacing = 2f;
@@ -19,6 +21,8 @@ public class sinusoidal : MonoBehaviour
     private GameObject[,] cells;
     private Vector3[,] initialPositions;
     private float time;
+
+    private GameObject boya;
     
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -33,7 +37,7 @@ public class sinusoidal : MonoBehaviour
         {
             for (int z = 0; z < height; z++)
             {
-                Vector3 pos = new Vector3(x * spacing, 0f, z * spacing);
+                Vector3 pos = new Vector3((x + initialX) * spacing, 0f, (z + initialY) * spacing);
                 GameObject cell = Instantiate(cellPrefab, pos, Quaternion.identity, transform);
 
                 cells[x, z] = cell;
@@ -43,7 +47,7 @@ public class sinusoidal : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         time += stepTime;
 
@@ -70,5 +74,23 @@ public class sinusoidal : MonoBehaviour
                 
         }
 
+        if (boya != null)
+        {
+            boya.transform.position = new Vector3(boya.transform.position.x , GetSinusoidalWaterHeight(boya.transform.position), boya.transform.position.z);
+        }
+
+    }
+
+    public float GetSinusoidalWaterHeight(Vector3 buoyPos)
+    {
+        // Usamos los mismos parámetros que definiste en tu ola
+        float velocidad = longitudOnda / periodo;
+        float posicionProyectada = buoyPos.x * direccion.x + buoyPos.z * direccion.y;
+        float k = (2f * Mathf.PI) / longitudOnda;
+
+        float insideSin = k * (posicionProyectada - velocidad * time) + faseInicial;
+
+        // Retorna la altura Y absoluta del agua en esa coordenada X, Z
+        return initialY + (amplitud * Mathf.Sin(insideSin));
     }
 }
